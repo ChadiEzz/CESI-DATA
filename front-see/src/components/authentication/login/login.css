@@ -1,0 +1,22 @@
+.loginPage {
+}
+
+.loginPage img {
+    height: auto;
+    width: 400px;
+}
+
+/*.loginPage .MuiInputLabel-root {
+    color: red !important;
+}
+
+.loginPage .label .Mui-focused {
+    border-color: red !important;
+    color: red;
+}*/
+
+/*input[type="text"] {
+    background-color: red;
+    opacity: 50%;
+    border: white;  
+}*/
