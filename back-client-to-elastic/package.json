@@ -1,0 +1,15 @@
+{
+  "name": "back-client-to-elastic",
+  "version": "1.0.0",
+  "description": "back-end to store data into elasticsearch",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Chadi EZZEDINE",
+  "license": "MIT",
+  "dependencies": {
+    "@elastic/elasticsearch": "^8.2.1",
+    "express": "^4.18.1"
+  }
+}
