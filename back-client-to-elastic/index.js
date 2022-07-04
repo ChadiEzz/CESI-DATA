@@ -114,6 +114,63 @@ app.post('/create-ad', upload.single('adFile'), async (req, res) => {
     res.send(result);
 });
 
+app.post('/create-admap', async (req, res) => {
+    const result = await client.indices.putMapping({
+        index: req.body.index,
+        body: {
+            properties: {
+                adFile: { type: "object" },
+                targets: {
+                    properties: {
+                        userProfile: {
+                            properties: {
+                                age: {
+                                    properties: {
+                                        from: { type: "integer" },
+                                        to: { type: "integer" }
+                                    }
+                                },
+                                sex: { type: "text" }
+                            }
+                        },
+                        restrictedContent: {
+                            properties: {
+                                mature: { type: "boolean" },
+                                gamble: { type: "boolean" },
+                                politic: { type: "boolean" },
+                                religion: { type: "boolean" }
+                            }
+                        },
+                        bid: {
+                            properties: {
+                                min: { type: "float" },
+                                max: { type: "float" }
+                            }
+                        },
+                        period: {
+                            properties: {
+                                from: {
+                                    type: "date",
+                                    format: "dd-MM-yyyy"
+                                },
+                                to: {
+                                    type: "date",
+                                    format: "dd-MM-yyyy"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    await client.indices.refresh({ index: req.body.index })
+
+    console.log(`%s${"[/create-admap] "}` + `%s${"Map for Index : \"" + req.body.index + "\" has been created !"}`, logStyle.fg.green, logStyle.fg.yellow);
+    res.send(result);
+});
+
 app.post('/create-adspace', async (req, res) => {
     var targets = JSON.parse(req.body.targets);
     const result = await client.index({
@@ -141,6 +198,50 @@ app.post('/create-adspace', async (req, res) => {
     await client.indices.refresh({ index: req.body.index });
 
     console.log(`%s${"[/create-adspace] "}` + `%s${"New AD SPACE has been created on Index : \"" + req.body.index + "\" !"}`, logStyle.fg.green, logStyle.fg.yellow);
+    res.send(result);
+});
+
+app.post('/create-spacemap', async (req, res) => {
+    const result = await client.indices.putMapping({
+        index: req.body.index,
+        body: {
+            properties: {
+                adFile: { type: "object" },
+                targets: {
+                    properties: {
+                        userProfile: {
+                            properties: {
+                                age: {
+                                    properties: {
+                                        from: { type: "integer" },
+                                        to: { type: "integer" }
+                                    }
+                                },
+                                sex: { type: "text" }
+                            }
+                        },
+                        restrictedContent: {
+                            properties: {
+                                mature: { type: "boolean" },
+                                gamble: { type: "boolean" },
+                                politic: { type: "boolean" },
+                                religion: { type: "boolean" }
+                            }
+                        },
+                        validConditions: {
+                            properties: {
+                                minBid: { type: "float" }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    await client.indices.refresh({ index: req.body.index })
+
+    console.log(`%s${"[/create-spacemap] "}` + `%s${"Map for Index : \"" + req.body.index + "\" has been created !"}`, logStyle.fg.green, logStyle.fg.yellow);
     res.send(result);
 });
 
