@@ -4,8 +4,10 @@ const multer = require('multer');
 const upload = multer();
 const { Client } = require('@elastic/elasticsearch');
 const client = new Client({ node: 'http://localhost:9200' });
+const cors = require('cors');
 
 const app = express();
+app.use(cors());
 app.use(bodyParser.urlencoded({
     extended: true
 }));
@@ -48,35 +50,42 @@ const logStyle = {
 
 // Express routes
 app.post('/create-index', async (req, res) => {
+    var startTime = Date.now();
     const result = await client.indices.create({
         index: req.body.index
     });
 
     await client.indices.refresh({ index: req.body.index })
 
-    console.log(`%s${"[/create-index] "}` + `%s${"Index : \"" + req.body.index + "\" has been created !"}`, logStyle.fg.green, logStyle.fg.yellow);
+    var elapsedTime = Date.now() - startTime;
+    console.log(`%s${"[/create-index] "}` + `%s${"Index : \"" + req.body.index + "\" has been created !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.green, logStyle.fg.yellow, logStyle.fg.green);
     res.send(result);
 });
 
 app.get("/list-by-index", async (req, res) => {
+    var startTime = Date.now();
     const result = await client.search({
         index: req.query.index
     });
 
-    console.log(`%s${"[/list-by-index] "}` + `%s${"All documents from Index : \"" + req.query.index + "\" has been sent to : \"" + req.get('host') + "\" !"}`, logStyle.fg.cyan, logStyle.fg.white);
+    var elapsedTime = Date.now() - startTime;
+    console.log(`%s${"[/list-by-index] "}` + `%s${"All documents from Index : \"" + req.query.index + "\" has been sent to : \"" + req.get('host') + "\" !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.cyan, logStyle.fg.white, logStyle.fg.green);
     res.json(result);
 });
 
 app.delete("/remove-index", async (req, res) => {
+    var startTime = Date.now();
     const result = await client.indices.delete({
         index: req.body.index
     });
 
-    console.log(`%s${"[/remove-index] "}` + `%s${"Index : \"" + req.body.index + "\" has be removed with all underlying Documents!"}`, logStyle.fg.magenta, logStyle.fg.cyan);
+    var elapsedTime = Date.now() - startTime;
+    console.log(`%s${"[/remove-index] "}` + `%s${"Index : \"" + req.body.index + "\" has be removed with all underlying Documents!"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.magenta, logStyle.fg.cyan, logStyle.fg.green);
     res.json(result);
 });
 
 app.post('/create-ad', upload.single('adFile'), async (req, res) => {
+    var startTime = Date.now();
     var query = JSON.parse(req.body.newAd);
     const result = await client.index({
         index: query.index,
@@ -110,11 +119,13 @@ app.post('/create-ad', upload.single('adFile'), async (req, res) => {
 
     await client.indices.refresh({ index: query.index });
 
-    console.log(`%s${"[/create-ad] "}` + `%s${"New AD has been created on Index : \"" + query.index + "\" !"}`, logStyle.fg.green, logStyle.fg.yellow);
+    var elapsedTime = Date.now() - startTime;
+    console.log(`%s${"[/create-ad] "}` + `%s${"New AD has been created on Index : \"" + query.index + "\" !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.green, logStyle.fg.yellow, logStyle.fg.green);
     res.send(result);
 });
 
 app.post('/create-admap', async (req, res) => {
+    var startTime = Date.now();
     const result = await client.indices.putMapping({
         index: req.body.index,
         body: {
@@ -167,11 +178,13 @@ app.post('/create-admap', async (req, res) => {
 
     await client.indices.refresh({ index: req.body.index })
 
-    console.log(`%s${"[/create-admap] "}` + `%s${"Map for Index : \"" + req.body.index + "\" has been created !"}`, logStyle.fg.green, logStyle.fg.yellow);
+    var elapsedTime = Date.now() - startTime;
+    console.log(`%s${"[/create-admap] "}` + `%s${"Map for Index : \"" + req.body.index + "\" has been created !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.green, logStyle.fg.yellow, logStyle.fg.green);
     res.send(result);
 });
 
 app.post('/create-adspace', async (req, res) => {
+    var startTime = Date.now();
     var targets = JSON.parse(req.body.targets);
     const result = await client.index({
         index: req.body.index,
@@ -197,11 +210,13 @@ app.post('/create-adspace', async (req, res) => {
 
     await client.indices.refresh({ index: req.body.index });
 
-    console.log(`%s${"[/create-adspace] "}` + `%s${"New AD SPACE has been created on Index : \"" + req.body.index + "\" !"}`, logStyle.fg.green, logStyle.fg.yellow);
+    var elapsedTime = Date.now() - startTime;
+    console.log(`%s${"[/create-adspace] "}` + `%s${"New AD SPACE has been created on Index : \"" + req.body.index + "\" !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.green, logStyle.fg.yellow, logStyle.fg.green);
     res.send(result);
 });
 
 app.post('/create-spacemap', async (req, res) => {
+    var startTime = Date.now();
     const result = await client.indices.putMapping({
         index: req.body.index,
         body: {
@@ -241,11 +256,13 @@ app.post('/create-spacemap', async (req, res) => {
 
     await client.indices.refresh({ index: req.body.index })
 
-    console.log(`%s${"[/create-spacemap] "}` + `%s${"Map for Index : \"" + req.body.index + "\" has been created !"}`, logStyle.fg.green, logStyle.fg.yellow);
+    var elapsedTime = Date.now() - startTime;
+    console.log(`%s${"[/create-spacemap] "}` + `%s${"Map for Index : \"" + req.body.index + "\" has been created !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.green, logStyle.fg.yellow, logStyle.fg.green);
     res.send(result);
 });
 
 app.delete("/remove-document", async (req, res) => {
+    var startTime = Date.now();
     const result = await client.deleteByQuery({
         index: req.body.index,
         body: {
@@ -259,7 +276,8 @@ app.delete("/remove-document", async (req, res) => {
         }
     });
 
-    console.log(`%s${"[/remove-document] "}` + `%s${"Document ID : \"" + req.body.id + "\" has be removed !"}`, logStyle.fg.magenta, logStyle.fg.cyan);
+    var elapsedTime = Date.now() - startTime;
+    console.log(`%s${"[/remove-document] "}` + `%s${"Document ID : \"" + req.body.id + "\" has be removed !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.magenta, logStyle.fg.cyan, logStyle.fg.green);
     res.json(result);
 });
 
