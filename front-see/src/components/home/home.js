@@ -17,7 +17,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import { AddCircle, AddCircleOutline, AspectRatio, BarChart, Campaign, Check, Close, Delete, ImageSearch, Send } from '@mui/icons-material'
-import { Button, Card, CardHeader, CardMedia, Grid, TextField, Paper, CardActionArea, Dialog, DialogTitle, DialogActions, DialogContent, DialogContentText } from '@mui/material';
+import { Button, Card, CardHeader, CardMedia, Grid, TextField, Paper, CardActionArea, Dialog, DialogTitle, DialogActions, DialogContent, DialogContentText, Snackbar, Alert } from '@mui/material';
 import { ThemeProvider } from '@emotion/react';
 import logoSmall from '../../logoGreen.png';
 import logoBig from '../../LogoPublikeco.png';
@@ -127,7 +127,6 @@ export default function Home(props) {
   const [open, setOpen] = React.useState(false);
   const [adList, setAdList] = React.useState([]);
   const [spaceList, setSpaceList] = React.useState([]);
-  const [dataViz, setDataViz] = React.useState([]);
   const [lastMonthsAdData, setLastMonthsAdData] = React.useState([]);
   const [lastMonthsSpaceData, setLastMonthsSpaceData] = React.useState([]);
   const [menu1, setMenu1] = React.useState(true);
@@ -139,7 +138,6 @@ export default function Home(props) {
   const [appID, setAppID] = React.useState("");
   const [getAdImage, setGetAdImage] = React.useState("./LogoPublikeco.png");
   const [openDialogAd, setOpenDialogAd] = React.useState(false);
-  const [openDialogSpace, setOpenDialogSpace] = React.useState(false);
   const [dialogInfos, setDialogInfos] = React.useState({
     titre: "",
     ageFrom: "",
@@ -150,6 +148,12 @@ export default function Home(props) {
     gamble: false,
     politic: false,
     religion: false
+  });
+  const [alertInfos, setAlertInfos] = React.useState({
+    msg: "",
+    severity: "",
+    open: false,
+    duration: 6000
   });
 
   const handleDrawerOpen = () => {
@@ -177,7 +181,6 @@ export default function Home(props) {
       var spaceTab = [26, 38, 47, 50, 80, 83];
       adTab[5] += data.createAd.length;
       spaceTab[5] += data.createSpace.length;
-      setDataViz(data);
       setLastMonthsAdData(adTab);
       setLastMonthsSpaceData(spaceTab);
     });
@@ -217,6 +220,15 @@ export default function Home(props) {
       var tmp = [...data.hits.hits];
       setSpaceList(tmp);
     });
+  }
+
+  const handleCloseAlert = () => {
+    setAlertInfos({
+      msg: "",
+      severity: "",
+      open: false,
+      duration: 6000
+    })
   }
 
   const removeAd = async (documentID) => {
@@ -358,7 +370,23 @@ export default function Home(props) {
     await fetch("http://" + document.location.hostname + ":8081/get-my-ad?spaceid=" + appID, myInit).then(res => {
       return res.json();
     }).then(data => {
-      setGetAdImage(data.hits.hits[0]._source.adFile.adFile);
+      if (data.hits.hits.length === 0) {
+        setAlertInfos({
+          msg: "Aucune publicité ne correspond à vos critères",
+          severity: "info",
+          open: true,
+          duration: 6000
+        })
+        console.log(data);
+      } else {
+        setAlertInfos({
+          msg: "Nous avons trouvé la publicité la plus adaptée à vos critères !",
+          severity: "success",
+          open: true,
+          duration: 6000
+        })
+        setGetAdImage(data.hits.hits[0]._source.adFile.adFile);
+      }
     });
   }
 
@@ -368,10 +396,6 @@ export default function Home(props) {
 
   const handleCloseDialogAd = () => {
     setOpenDialogAd(false);
-  };
-
-  const handleCloseDialogSpace = () => {
-    setOpenDialogSpace(false);
   };
 
   return (
@@ -610,19 +634,19 @@ export default function Home(props) {
                         }
                       />
                       <CardActionArea onClick={() => {
-                      setOpenDialogAd(true);
-                      setDialogInfos({
-                        titre: space._source.name,
-                        ageFrom: space._source.userProfile.age.from,
-                        ageTo: space._source.userProfile.age.to,
-                        sex: space._source.userProfile.sex === "MALE" ? "Hommes" : space._source.userProfile.sex === "FEMALE" ? "Femmes" : "Les deux",
-                        bid: space._source.validConditions.minBid,
-                        mature: space._source.restrictedContent.mature,
-                        gamble: space._source.restrictedContent.gamble,
-                        politic: space._source.restrictedContent.politic,
-                        religion: space._source.restrictedContent.religion
-                      })
-                    }}>
+                        setOpenDialogAd(true);
+                        setDialogInfos({
+                          titre: space._source.name,
+                          ageFrom: space._source.userProfile.age.from,
+                          ageTo: space._source.userProfile.age.to,
+                          sex: space._source.userProfile.sex === "MALE" ? "Hommes" : space._source.userProfile.sex === "FEMALE" ? "Femmes" : "Les deux",
+                          bid: space._source.validConditions.minBid,
+                          mature: space._source.restrictedContent.mature,
+                          gamble: space._source.restrictedContent.gamble,
+                          politic: space._source.restrictedContent.politic,
+                          religion: space._source.restrictedContent.religion
+                        })
+                      }}>
                         <CardMedia
                           component="img"
                           height="194"
@@ -734,6 +758,13 @@ export default function Home(props) {
               </Button>
             </DialogActions>
           </Dialog>
+          <Snackbar anchorOrigin={{ vertical:'bottom', horizontal: 'center' }} open={alertInfos.open} autoHideDuration={alertInfos.duration} onClose={handleCloseAlert}>
+            <Alert onClose={handleCloseAlert} severity={alertInfos.severity} sx={{ width: '100%' }}>
+              {
+                alertInfos.msg
+              }
+            </Alert>
+          </Snackbar>
         </Grid>
       </Box>
     </ThemeProvider>
