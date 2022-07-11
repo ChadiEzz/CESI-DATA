@@ -16,11 +16,13 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
-import { AddCircle, AddCircleOutline, AspectRatio, BarChart, Campaign, Delete } from '@mui/icons-material'
-import { Card, CardHeader, CardMedia, Grid } from '@mui/material';
+import { AddCircle, AddCircleOutline, AspectRatio, BarChart, Campaign, Check, Close, Delete, ImageSearch, Send } from '@mui/icons-material'
+import { Button, Card, CardHeader, CardMedia, Grid, TextField, Paper, CardActionArea, Dialog, DialogTitle, DialogActions, DialogContent, DialogContentText } from '@mui/material';
 import { ThemeProvider } from '@emotion/react';
 import logoSmall from '../../logoGreen.png';
 import logoBig from '../../LogoPublikeco.png';
+import Draggable from 'react-draggable';
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -43,6 +45,17 @@ ChartJS.register(
 );
 
 const drawerWidth = 240;
+
+function PaperComponent(props) {
+  return (
+    <Draggable
+      handle="#draggable-dialog-title"
+      cancel={'[class*="MuiDialogContent-root"]'}
+    >
+      <Paper {...props} />
+    </Draggable>
+  );
+}
 
 const openedMixin = (theme) => ({
   width: drawerWidth,
@@ -122,6 +135,22 @@ export default function Home(props) {
   const [menu3, setMenu3] = React.useState(false);
   const [menu4, setMenu4] = React.useState(false);
   const [menu5, setMenu5] = React.useState(false);
+  const [menu6, setMenu6] = React.useState(false);
+  const [appID, setAppID] = React.useState("");
+  const [getAdImage, setGetAdImage] = React.useState("./LogoPublikeco.png");
+  const [openDialogAd, setOpenDialogAd] = React.useState(false);
+  const [openDialogSpace, setOpenDialogSpace] = React.useState(false);
+  const [dialogInfos, setDialogInfos] = React.useState({
+    titre: "",
+    ageFrom: "",
+    ageTo: "",
+    sex: "",
+    bid: "",
+    mature: false,
+    gamble: false,
+    politic: false,
+    religion: false
+  });
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -171,17 +200,17 @@ export default function Home(props) {
       setAdList(tmp);
     });
   }
-  
+
   const getSpaceList = async () => {
     var myHeaders = new Headers();
-    
+
     var myInit = {
       method: 'GET',
       headers: myHeaders,
       mode: 'cors',
       cache: 'default'
     };
-    
+
     await fetch("http://" + document.location.hostname + ":8080/list-by-index?index=adspaces", myInit).then(res => {
       return res.json();
     }).then(data => {
@@ -189,51 +218,52 @@ export default function Home(props) {
       setSpaceList(tmp);
     });
   }
-  
+
   const removeAd = async (documentID) => {
     var myBody = {
       index: "advertisements",
       id: documentID
     }
-    
+
     const requestOptions = {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(myBody)
     };
-    
+
     await fetch("http://" + document.location.hostname + ":8080/remove-document", requestOptions).then(res => {
       return res.json();
     }).then(data => {
       getAdList();
     });
   }
-  
+
   const removeSpace = async (documentID) => {
     var myBody = {
       index: "adspaces",
       id: documentID
     }
-    
+
     const requestOptions = {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(myBody)
     };
-    
+
     await fetch("http://" + document.location.hostname + ":8080/remove-document", requestOptions).then(res => {
       return res.json();
     }).then(data => {
       getSpaceList();
     });
   }
-  
+
   const onMenuClick1 = () => {
     setMenu1(true);
     setMenu2(false);
     setMenu3(false);
     setMenu4(false);
     setMenu5(false);
+    setMenu6(false);
   }
 
   const onMenuClick2 = () => {
@@ -242,6 +272,7 @@ export default function Home(props) {
     setMenu3(false);
     setMenu4(false);
     setMenu5(false);
+    setMenu6(false);
   }
   const onMenuClick3 = () => {
     setMenu1(false);
@@ -249,6 +280,7 @@ export default function Home(props) {
     setMenu3(true);
     setMenu4(false);
     setMenu5(false);
+    setMenu6(false);
   }
   const onMenuClick4 = () => {
     setMenu1(false);
@@ -256,6 +288,7 @@ export default function Home(props) {
     setMenu3(false);
     setMenu4(true);
     setMenu5(false);
+    setMenu6(false);
   }
   const onMenuClick5 = () => {
     setMenu1(false);
@@ -263,7 +296,18 @@ export default function Home(props) {
     setMenu3(false);
     setMenu4(false);
     setMenu5(true);
+    setMenu6(false);
   }
+
+  const onMenuClick6 = () => {
+    setMenu1(false);
+    setMenu2(false);
+    setMenu3(false);
+    setMenu4(false);
+    setMenu5(false);
+    setMenu6(true);
+  }
+
   React.useEffect(() => {
     getAdList();
     getSpaceList();
@@ -301,6 +345,34 @@ export default function Home(props) {
     ],
   };
 
+  const askForAd = async () => {
+    var myHeaders = new Headers();
+
+    var myInit = {
+      method: 'GET',
+      headers: myHeaders,
+      mode: 'cors',
+      cache: 'default'
+    };
+
+    await fetch("http://" + document.location.hostname + ":8081/get-my-ad?spaceid=" + appID, myInit).then(res => {
+      return res.json();
+    }).then(data => {
+      setGetAdImage(data.hits.hits[0]._source.adFile.adFile);
+    });
+  }
+
+  function appIdChange(e) {
+    setAppID(e.target.value);
+  }
+
+  const handleCloseDialogAd = () => {
+    setOpenDialogAd(false);
+  };
+
+  const handleCloseDialogSpace = () => {
+    setOpenDialogSpace(false);
+  };
 
   return (
     <ThemeProvider theme={props.muiThemeMode}>
@@ -455,10 +527,35 @@ export default function Home(props) {
               </ListItemButton>
             </ListItem>
           </List>
+          <Divider />
+          <List>
+            <ListItem key={"Demander une Pub"} disablePadding sx={{ display: 'block' }} onClick={() => onMenuClick6()}>
+              <ListItemButton
+                sx={{
+                  minHeight: 48,
+                  justifyContent: open ? 'initial' : 'center',
+                  px: 2.5,
+                }}
+                id="MenuButton6"
+                selected={menu6}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : 'auto',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ImageSearch />
+                </ListItemIcon>
+                <ListItemText primary={"Demander une Pub"} sx={{ opacity: open ? 1 : 0 }} />
+              </ListItemButton>
+            </ListItem>
+          </List>
         </Drawer>
         <Grid container gap={3} sx={{ paddingLeft: "15px", paddingRight: "15px", paddingTop: "70px", paddingBottom: "6px" }}>
           {
-            menu1 ?
+            menu1 === true ?
               adList.map(ad => {
                 var dateArray = ad._source.targets.period.from.split('-');
                 var dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -474,12 +571,27 @@ export default function Home(props) {
                         </IconButton>
                       }
                     />
-                    <CardMedia
-                      component="img"
-                      height="194"
-                      image={ad._source.adFile.adFile}
-                      alt={ad._source.adFile.adTitle}
-                    />
+                    <CardActionArea onClick={() => {
+                      setOpenDialogAd(true);
+                      setDialogInfos({
+                        titre: ad._source.adFile.adTitle,
+                        ageFrom: ad._source.targets.userProfile.age.from,
+                        ageTo: ad._source.targets.userProfile.age.to,
+                        sex: ad._source.targets.userProfile.sex === "MALE" ? "Hommes" : ad._source.targets.userProfile.sex === "FEMALE" ? "Femmes" : "Les deux",
+                        bid: ad._source.targets.bid.max,
+                        mature: ad._source.targets.restrictedContent.mature,
+                        gamble: ad._source.targets.restrictedContent.gamble,
+                        politic: ad._source.targets.restrictedContent.politic,
+                        religion: ad._source.targets.restrictedContent.religion
+                      })
+                    }}>
+                      <CardMedia
+                        component="img"
+                        height="194"
+                        image={ad._source.adFile.adFile}
+                        alt={ad._source.adFile.adTitle}
+                      />
+                    </CardActionArea>
                   </Card>
                 );
               })
@@ -490,19 +602,34 @@ export default function Home(props) {
                     <Card id={space._id} key={space._id} sx={{ width: '310px', display: "inline-block" }}>
                       <CardHeader
                         title={space._source.name}
-                        subheader={""}
+                        subheader={"ID : " + space._id}
                         action={
                           <IconButton id={space._id} aria-label="delete" onClick={() => removeSpace(space._id)}>
                             <Delete />
                           </IconButton>
                         }
                       />
-                      <CardMedia
-                        component="img"
-                        height="194"
-                        image={logoSmall}
-                        alt={space._id}
-                      />
+                      <CardActionArea onClick={() => {
+                      setOpenDialogAd(true);
+                      setDialogInfos({
+                        titre: space._source.name,
+                        ageFrom: space._source.userProfile.age.from,
+                        ageTo: space._source.userProfile.age.to,
+                        sex: space._source.userProfile.sex === "MALE" ? "Hommes" : space._source.userProfile.sex === "FEMALE" ? "Femmes" : "Les deux",
+                        bid: space._source.validConditions.minBid,
+                        mature: space._source.restrictedContent.mature,
+                        gamble: space._source.restrictedContent.gamble,
+                        politic: space._source.restrictedContent.politic,
+                        religion: space._source.restrictedContent.religion
+                      })
+                    }}>
+                        <CardMedia
+                          component="img"
+                          height="194"
+                          image={logoSmall}
+                          alt={space._id}
+                        />
+                      </CardActionArea>
                     </Card>
                   );
                 })
@@ -510,8 +637,103 @@ export default function Home(props) {
                 menu3 === true ?
                   <Bar options={verticalOption} data={verticalData} />
                   :
-                  ""
+                  menu6 === true ?
+                    <Grid
+                      container
+                      rowGap={5}
+                      direction="column"
+                      justifyContent="center"
+                      alignItems="center">
+                      <Grid item>
+                        <img alt="" src={getAdImage} style={{ width: '310px' }} />
+                      </Grid>
+                      <Grid item>
+                        <TextField
+                          variant="outlined"
+                          label="ID D'application"
+                          value={appID}
+                          onChange={appIdChange} />
+                      </Grid>
+                      <Grid item>
+                        <Button
+                          variant="contained"
+                          color="success"
+                          endIcon={<Send />}
+                          onClick={() => askForAd()}>
+                          Demander
+                        </Button>
+                      </Grid>
+                    </Grid>
+                    :
+                    ""
           }
+          <Dialog
+            open={openDialogAd}
+            onClose={handleCloseDialogAd}
+            PaperComponent={PaperComponent}
+            aria-labelledby="draggable-dialog-title"
+          >
+            <DialogTitle style={{ cursor: 'move' }} id="draggable-dialog-title">
+              {
+                dialogInfos.titre
+              }
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                {
+                  "Tranche d'âge cible : De " + dialogInfos.ageFrom + " à " + dialogInfos.ageTo
+                }
+                <br />
+                <br />
+                {
+                  "Genre cible : " + dialogInfos.sex
+                }
+                <br />
+                <br />
+                {
+                  "Enchère : " + dialogInfos.bid + " €"
+                }
+                <br />
+                <br />
+                {
+                  "Contenu :"
+                }
+                <br />
+                {
+                  "• Adulte : "
+                }
+                {
+                  dialogInfos.mature ? <Check sx={{ paddingTop: "5px", color: "green" }} /> : <Close sx={{ paddingTop: "5px", color: "red" }} />
+                }
+                <br />
+                {
+                  "• Jeux d'argent : "
+                }
+                {
+                  dialogInfos.gamble ? <Check sx={{ paddingTop: "5px", color: "green" }} /> : <Close sx={{ paddingTop: "5px", color: "red" }} />
+                }
+                <br />
+                {
+                  "• Politique : "
+                }
+                {
+                  dialogInfos.politic ? <Check sx={{ paddingTop: "5px", color: "green" }} /> : <Close sx={{ paddingTop: "5px", color: "red" }} />
+                }
+                <br />
+                {
+                  "• Religion : "
+                }
+                {
+                  dialogInfos.religion ? <Check sx={{ paddingTop: "5px", color: "green" }} /> : <Close sx={{ paddingTop: "5px", color: "red" }} />
+                }
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button autoFocus onClick={handleCloseDialogAd} color="success">
+                Fermer
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Grid>
       </Box>
     </ThemeProvider>

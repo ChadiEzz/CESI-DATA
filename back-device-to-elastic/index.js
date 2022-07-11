@@ -4,11 +4,14 @@ const multer = require('multer');
 const upload = multer();
 const { Client } = require('@elastic/elasticsearch');
 const client = new Client({ node: 'http://localhost:9200' });
+const cors = require('cors');
 
 const app = express();
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+
+app.use(cors());
 
 app.use(bodyParser.json());
 
@@ -48,93 +51,96 @@ const logStyle = {
 
 // Express routes
 app.get('/get-my-ad', async (req, res) => {
-    var startTime = Date.now();
+    try {
+        var startTime = Date.now();
 
-    const space = await client.search({
-        index: "adspaces",
-        body: {
-            query: {
-                "ids": {
-                    "values": [
-                        req.query.spaceid
-                    ]
+        const space = await client.search({
+            index: "adspaces",
+            body: {
+                query: {
+                    "ids": {
+                        "values": [
+                            req.query.spaceid
+                        ]
+                    }
                 }
             }
-        }
-    }).then(async response => {
-        const ad = await client.search({
-            index: "advertisements",
-            body: {
-                "query": {
-                    "bool": {
-                        "should": [
-                            {
-                                "match": {
-                                    "targets.userProfile.sex": response.hits.hits[0]._source.userProfile.sex
-                                }
-                            },
-                            {
-                                "match": {
-                                    "targets.restrictedContent.mature": response.hits.hits[0]._source.restrictedContent.mature
-                                }
-                            },
-                            {
-                                "match": {
-                                    "targets.restrictedContent.gamble": response.hits.hits[0]._source.restrictedContent.gamble
-                                }
-                            },
-                            {
-                                "match": {
-                                    "targets.restrictedContent.politic": response.hits.hits[0]._source.restrictedContent.politic
-                                }
-                            },
-                            {
-                                "match": {
-                                    "targets.restrictedContent.religion": response.hits.hits[0]._source.restrictedContent.religion
-                                }
-                            },
-                            {
-                                "range": {
-                                    "targets.bid.max": {
-                                        "gte": response.hits.hits[0]._source.validConditions.minBid
+        }).then(async response => {
+            const ad = await client.search({
+                index: "advertisements",
+                body: {
+                    "query": {
+                        "bool": {
+                            "should": [
+                                {
+                                    "match": {
+                                        "targets.userProfile.sex": response.hits.hits[0]._source.userProfile.sex
+                                    }
+                                },
+                                {
+                                    "match": {
+                                        "targets.restrictedContent.mature": response.hits.hits[0]._source.restrictedContent.mature
+                                    }
+                                },
+                                {
+                                    "match": {
+                                        "targets.restrictedContent.gamble": response.hits.hits[0]._source.restrictedContent.gamble
+                                    }
+                                },
+                                {
+                                    "match": {
+                                        "targets.restrictedContent.politic": response.hits.hits[0]._source.restrictedContent.politic
+                                    }
+                                },
+                                {
+                                    "match": {
+                                        "targets.restrictedContent.religion": response.hits.hits[0]._source.restrictedContent.religion
+                                    }
+                                },
+                                {
+                                    "range": {
+                                        "targets.bid.max": {
+                                            "gte": response.hits.hits[0]._source.validConditions.minBid
+                                        }
+                                    }
+                                },
+                                {
+                                    "range": {
+                                        "targets.userProfile.age.from": {
+                                            "lte": response.hits.hits[0]._source.userProfile.age.minBid
+                                        }
+                                    }
+                                },
+                                {
+                                    "range": {
+                                        "targets.userProfile.age.to": {
+                                            "gte": response.hits.hits[0]._source.userProfile.age.maxBid
+                                        }
                                     }
                                 }
-                            },
-                            {
-                              "range": {
-                                "targets.userProfile.age.from": {
-                                  "lte": response.hits.hits[0]._source.userProfile.age.minBid
-                                }
-                              }
-                            },
-                            {
-                              "range": {
-                                "targets.userProfile.age.to": {
-                                  "gte": response.hits.hits[0]._source.userProfile.age.maxBid
-                                }
-                              }
-                            }
-                        ],
-                        "minimum_should_match": "100%"
-                    }
-                },
-                "sort": [
-                    {
-                        "targets.bid.max": {
-                            "order": "asc"
+                            ],
+                            "minimum_should_match": "100%"
                         }
-                    }
-                ]
-            }
-        }).then(ad => {
-            var elapsedTime = Date.now() - startTime;
-            var adId = 0;
-            if (ad.hits.hits[0])
-                adId = ad.hits.hits[0]._id;
-            console.log(`%s${"[/get-my-ad] "}` + `%s${"Advertisement ID : \"" + adId + "\" has been sent to : \"" + req.get('host') + "\" !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.cyan, logStyle.fg.white, logStyle.fg.green);
-            res.send(ad);
+                    },
+                    "sort": [
+                        {
+                            "targets.bid.max": {
+                                "order": "desc"
+                            }
+                        }
+                    ]
+                }
+            }).then(ad => {
+                var elapsedTime = Date.now() - startTime;
+                var adId = 0;
+                if (ad.hits.hits[0])
+                    adId = ad.hits.hits[0]._id;
+                console.log(`%s${"[/get-my-ad] "}` + `%s${"Advertisement ID : \"" + adId + "\" has been sent to : \"" + req.get('host') + "\" !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.cyan, logStyle.fg.white, logStyle.fg.green);
+                res.send(ad);
+            });
         });
-    });
+    } catch (error) {
+    }
 });
 
 app.listen(8081);
