@@ -1,5 +1,5 @@
 {
-    "URL": "http://localhost:3000/",
-    "LOGIN": "login",
-    "HOME": "home"
+    "URL": "http://localhost:3000",
+    "LOGIN": "/login",
+    "HOME": "/home"
 }

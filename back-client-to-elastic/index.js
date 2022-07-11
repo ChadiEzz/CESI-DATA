@@ -9,6 +9,7 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 app.use(bodyParser.urlencoded({
+    limit: '10mb',
     extended: true
 }));
 
@@ -48,6 +49,11 @@ const logStyle = {
     }
 };
 
+//GLOBAL DATA XD
+var createAd = [];
+var createSpace = [];
+var deleteDocument = [];
+
 // Express routes
 app.post('/create-index', async (req, res) => {
     var startTime = Date.now();
@@ -73,6 +79,20 @@ app.get("/list-by-index", async (req, res) => {
     res.json(result);
 });
 
+app.get("/data-requests", async (req, res) => {
+    var startTime = Date.now();
+
+    var allData = {
+        createAd: createAd,
+        createSpace: createSpace,
+        deleteDocument: deleteDocument
+    };
+
+    var elapsedTime = Date.now() - startTime;
+    console.log(`%s${"[/data-requests] "}` + `%s${"All requests Datas has been sent to : \"" + req.get('host') + "\" !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.cyan, logStyle.fg.white, logStyle.fg.green);
+    res.json(allData);
+});
+
 app.delete("/remove-index", async (req, res) => {
     var startTime = Date.now();
     const result = await client.indices.delete({
@@ -84,13 +104,16 @@ app.delete("/remove-index", async (req, res) => {
     res.json(result);
 });
 
-app.post('/create-ad', upload.single('adFile'), async (req, res) => {
+app.post('/create-ad', async (req, res) => {
     var startTime = Date.now();
     var query = JSON.parse(req.body.newAd);
     const result = await client.index({
         index: query.index,
         body: {
-            adFile: req.file,
+            adFile: {
+                adTitle: query.title,
+                adFile: req.body.adFile
+            },
             targets: {
                 userProfile: {
                     age: {
@@ -120,6 +143,10 @@ app.post('/create-ad', upload.single('adFile'), async (req, res) => {
     await client.indices.refresh({ index: query.index });
 
     var elapsedTime = Date.now() - startTime;
+    var date = new Date();
+    date = date.toISOString().split('T')[0].split('-');
+    date = date[2] + '-' + date[1] + '-' + date[0];
+    createAd.push([date, elapsedTime]);
     console.log(`%s${"[/create-ad] "}` + `%s${"New AD has been created on Index : \"" + query.index + "\" !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.green, logStyle.fg.yellow, logStyle.fg.green);
     res.send(result);
 });
@@ -130,7 +157,12 @@ app.post('/create-admap', async (req, res) => {
         index: req.body.index,
         body: {
             properties: {
-                adFile: { type: "object" },
+                adFile: {
+                    properties: {
+                        adTitle: { type: "text" },
+                        adFile: { type: "text" }
+                    }
+                },
                 targets: {
                     properties: {
                         userProfile: {
@@ -189,6 +221,7 @@ app.post('/create-adspace', async (req, res) => {
     const result = await client.index({
         index: req.body.index,
         body: {
+            name: targets.name,
             userProfile: {
                 age: {
                     from: targets.userProfile.age.from,
@@ -211,6 +244,10 @@ app.post('/create-adspace', async (req, res) => {
     await client.indices.refresh({ index: req.body.index });
 
     var elapsedTime = Date.now() - startTime;
+    var date = new Date();
+    date = date.toISOString().split('T')[0].split('-');
+    date = date[2] + '-' + date[1] + '-' + date[0];
+    createSpace.push([date, elapsedTime]);
     console.log(`%s${"[/create-adspace] "}` + `%s${"New AD SPACE has been created on Index : \"" + req.body.index + "\" !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.green, logStyle.fg.yellow, logStyle.fg.green);
     res.send(result);
 });
@@ -221,7 +258,7 @@ app.post('/create-spacemap', async (req, res) => {
         index: req.body.index,
         body: {
             properties: {
-                adFile: { type: "object" },
+                name: { type: "text" },
                 targets: {
                     properties: {
                         userProfile: {
@@ -262,23 +299,36 @@ app.post('/create-spacemap', async (req, res) => {
 });
 
 app.delete("/remove-document", async (req, res) => {
-    var startTime = Date.now();
-    const result = await client.deleteByQuery({
-        index: req.body.index,
-        body: {
-            query: {
-                "ids": {
-                    "values": [
-                        req.body.id
-                    ]
+    try {
+        var startTime = Date.now();
+        await client.deleteByQuery({
+            index: req.body.index,
+            body: {
+                query: {
+                    "ids": {
+                        "values": [
+                            req.body.id
+                        ]
+                    }
                 }
             }
-        }
-    });
-
-    var elapsedTime = Date.now() - startTime;
-    console.log(`%s${"[/remove-document] "}` + `%s${"Document ID : \"" + req.body.id + "\" has be removed !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.magenta, logStyle.fg.cyan, logStyle.fg.green);
-    res.json(result);
+        }).then(async result => {
+            var startTime = Date.now();
+            await client.search({
+                index: req.body.index
+            }).then(data => {
+                var elapsedTime = Date.now() - startTime;
+                var date = new Date();
+                date = date.toISOString().split('T')[0].split('-');
+                date = date[2] + '-' + date[1] + '-' + date[0];
+                deleteDocument.push([req.body.index, date, elapsedTime]);
+                console.log(`%s${"[/remove-document] "}` + `%s${"Document ID : \"" + req.body.id + "\" has be removed !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.magenta, logStyle.fg.cyan, logStyle.fg.green);    
+                console.log(`%s${"[/list-by-index] "}` + `%s${"All documents from Index : \"" + req.body.index + "\" has been sent to : \"" + req.get('host') + "\" !"}` + `%s${" +" + elapsedTime + "ms"}`, logStyle.fg.cyan, logStyle.fg.white, logStyle.fg.green);
+                res.json(data);
+            });
+        });
+    } catch (error) {
+    }
 });
 
 app.listen(8080);

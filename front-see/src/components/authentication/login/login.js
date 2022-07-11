@@ -6,11 +6,11 @@ import Routes from "../../../config/routes.json";
 
 //Style imports
 import './login.css';
-import { Grid, TextField, createTheme, ThemeProvider, Button } from '@mui/material';
+import { Grid, TextField, ThemeProvider, Button } from '@mui/material';
 import { Send } from '@mui/icons-material';
 
 function Connexion() {
-    document.location.href = Routes.URL + Routes.HOME; 
+    document.location.href = "http://" + document.location.hostname + ":3000" + Routes.HOME;
 }
 
 function Login(props) {
