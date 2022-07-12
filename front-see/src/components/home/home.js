@@ -151,7 +151,7 @@ export default function Home(props) {
   });
   const [alertInfos, setAlertInfos] = React.useState({
     msg: "",
-    severity: "",
+    severity: "info",
     open: false,
     duration: 6000
   });
@@ -225,7 +225,7 @@ export default function Home(props) {
   const handleCloseAlert = () => {
     setAlertInfos({
       msg: "",
-      severity: "",
+      severity: "info",
       open: false,
       duration: 6000
     })
@@ -372,12 +372,12 @@ export default function Home(props) {
     }).then(data => {
       if (data.hits.hits.length === 0) {
         setAlertInfos({
-          msg: "Aucune publicité ne correspond à vos critères",
+          msg: "Malheureusement aucune publicité ne correspond à vos critères ...",
           severity: "info",
           open: true,
           duration: 6000
         })
-        console.log(data);
+        setGetAdImage("./LogoPublikeco.png");
       } else {
         setAlertInfos({
           msg: "Nous avons trouvé la publicité la plus adaptée à vos critères !",
@@ -601,7 +601,7 @@ export default function Home(props) {
                         titre: ad._source.adFile.adTitle,
                         ageFrom: ad._source.targets.userProfile.age.from,
                         ageTo: ad._source.targets.userProfile.age.to,
-                        sex: ad._source.targets.userProfile.sex === "MALE" ? "Hommes" : ad._source.targets.userProfile.sex === "FEMALE" ? "Femmes" : "Les deux",
+                        sex: ad._source.targets.userProfile.sex === "MALE" ? "Hommes" : ad._source.targets.userProfile.sex === "FEMALE" ? "Femmes" : "Tous",
                         bid: ad._source.targets.bid.max,
                         mature: ad._source.targets.restrictedContent.mature,
                         gamble: ad._source.targets.restrictedContent.gamble,
